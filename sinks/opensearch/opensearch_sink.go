@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/eventlogger"
 	"github.com/opensearch-project/opensearch-go/v2"
 	"github.com/opensearch-project/opensearch-go/v2/opensearchapi"
+	"io"
 )
 
 type OpenSearchSink struct {
@@ -51,6 +52,11 @@ func (o OpenSearchSink) Process(ctx context.Context, e *eventlogger.Event) (*eve
 		return nil, err
 	}
 
+	err = o.validateResultIsNotError(res)
+	if err != nil {
+		return nil, err
+	}
+
 	err = o.closeResponseBody(res)
 	if err != nil {
 		return nil, err
@@ -82,4 +88,17 @@ func (o OpenSearchSink) closeResponseBody(res *opensearchapi.Response) error {
 	}
 
 	return nil
+}
+
+func (o OpenSearchSink) validateResultIsNotError(resp *opensearchapi.Response) error {
+	if !resp.IsError() {
+		return nil
+	}
+
+	errorBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	return errors.New(fmt.Sprintf("unhandled error (%s): %+v", resp.Status(), errorBody))
 }

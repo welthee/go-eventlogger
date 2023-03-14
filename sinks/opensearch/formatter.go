@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	OpenSearchFormat = "json"
+	OpenSearchFormat = "opensearch"
 )
 
 // OpenSearchFormatter is a Formatter Node which formats the Event in OpenSearch format.
